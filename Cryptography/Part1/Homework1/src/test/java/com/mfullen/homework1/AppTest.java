@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.codec.binary.Hex;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,7 +67,8 @@ public class AppTest
         {
             BigInteger x1 = new BigInteger(x, 16);
             BigInteger y1 = new BigInteger(y, 16);
-            xor = x1.xor(y1).toString(16);
+            BigInteger bigIntegerXor = x1.xor(y1);
+            xor = Hex.encodeHexString(bigIntegerXor.toByteArray());
         }
         catch (Exception e)
         {
@@ -74,16 +76,58 @@ public class AppTest
         return xor;
     }
 
+    public boolean isValidAscii(char c)
+    {
+        if (c > 127)
+        {
+            return false;
+        }
+        if (c < 32 && c != 10)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+//    public String hexToAscii(String hex, boolean filterAscii)
+//    {
+//        StringBuilder output = new StringBuilder();
+//        for (int i = 0; i < hex.length(); i += 2)
+//        {
+//            String str = hex.substring(i, i + 2);
+//            char c = (char) Integer.parseInt(str, 16);
+//            if (filterAscii)
+//            {
+//                if (isValidAscii(c))
+//                {
+//                    output.append(c);
+//                }
+//                else
+//                {
+//                    output.append(".");
+//                }
+//            }
+//            else
+//            {
+//                output.append(c);
+//            }
+//        }
+//        return output.toString();
+//    }
+
     public String hexToAscii(String hex)
     {
-        StringBuilder output = new StringBuilder();
-        for (int i = 0; i < hex.length(); i += 2)
+        try
         {
-            String str = hex.substring(i, i + 2);
-            output.append((char) Integer.parseInt(str, 16));
+            byte[] decodeHex = Hex.decodeHex(hex.toCharArray());
+            String string = new String(decodeHex);
+            return string;
         }
-        return output.toString();
-
+        catch (Exception e)
+        {
+        }
+        return null;
     }
 
     /**
@@ -126,5 +170,48 @@ public class AppTest
             String xor3 = xor(xor, toHex("the program"));
             assertEquals("Hello World", hexToAscii(xor3));
         }
+
+    }
+
+    @Test
+    public void cipher1()
+    {
+        String xor = xor(targetCipher, cipherTexts[0]);
+        System.out.println("Xor: " + xor);
+        System.out.println("Xor Divisible by 2: " + ((xor.length() % 2) == 0));
+        System.out.println("Xor Ascii: " + hexToAscii(xor));
+        String spaceHex = toHex(" ");
+        System.out.println("Space Hex: " + spaceHex);
+
+        String cribHex = toHex(" ace ");
+
+        for (String cipher : cipherTexts)
+        {
+            xor = xor(targetCipher, cipher);
+            xorLine(xor, cribHex);
+            System.out.println("");
+        }
+
+
+
+        assertEquals("Hel", hexToAscii(xor));
+        assertEquals("3c0d094c1f523808000d09", xor);
+    }
+
+    protected String xorLine(String xor, String crib)
+    {
+        String line = "";
+        for (int i = 0; i < xor.length(); i = i + 2)
+        {
+            String substring = xor.substring(i, i + 2);
+            // System.out.println("Substring: " + substring + " : " + i);
+            String xor2 = xor(substring, crib);
+            //System.out.println("Xor2 Hex: " + xor2);
+            String hexToAscii = hexToAscii(xor2);
+            System.out.print(hexToAscii);
+            //System.out.println("===========================");
+            line += hexToAscii;
+        }
+        return line;
     }
 }
