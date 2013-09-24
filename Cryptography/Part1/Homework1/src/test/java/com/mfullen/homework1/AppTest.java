@@ -22,6 +22,7 @@ public class AppTest
     @Before
     public void setUp()
     {
+        this.targetCipher = "32510ba9babebbbefd001547a810e67149caee11d945cd7fc81a05e9f85aac650e9052ba6a8cd8257bf14d13e6f0a803b54fde9e77472dbff89d71b57bddef121336cb85ccb8f3315f4b52e301d16e9f52f904";
         String[] texts =
         {
             "315c4eeaa8b5f8aaf9174145bf43e1784b8fa00dc71d885a804e5ee9fa40b16349c146fb778cdf2d3aff021dfff5b403b510d0d0455468aeb98622b137dae857553ccd8883a7bc37520e06e515d22c954eba5025b8cc57ee59418ce7dc6bc41556bdb36bbca3e8774301fbcaa3b83b220809560987815f65286764703de0f3d524400a19b159610b11ef3e",
@@ -37,7 +38,7 @@ public class AppTest
         };
 
         this.cipherTexts = texts;
-        this.targetCipher = "32510ba9babebbbefd001547a810e67149caee11d945cd7fc81a05e9f85aac650e9052ba6a8cd8257bf14d13e6f0a803b54fde9e77472dbff89d71b57bddef121336cb85ccb8f3315f4b52e301d16e9f52f904";
+
     }
 
     public String toHex(String arg)
@@ -76,6 +77,60 @@ public class AppTest
         return xor;
     }
 
+    public String xor2(String x, String y)
+    {
+        String xor = null;
+        try
+        {
+            BigInteger x1 = new BigInteger(x, 16);
+            BigInteger y1 = new BigInteger(y, 16);
+            BigInteger bigIntegerXor = x1.xor(y1);
+            xor = Hex.encodeHexString(bigIntegerXor.toByteArray());
+            xor = bigIntegerXor.toString(16);
+        }
+        catch (Exception e)
+        {
+        }
+        return xor;
+    }
+
+    public String xorHex(String a, String b)
+    {
+        int length = a.length() > b.length() ? b.length() : a.length();
+        char[] chars = new char[length];
+        for (int i = 0; i < chars.length; i++)
+        {
+            chars[i] = toHex(fromHex(a.charAt(i)) ^ fromHex(b.charAt(i)));
+        }
+        return new String(chars);
+    }
+
+    private static int fromHex(char c)
+    {
+        if (c >= '0' && c <= '9')
+        {
+            return c - '0';
+        }
+        if (c >= 'A' && c <= 'F')
+        {
+            return c - 'A' + 10;
+        }
+        if (c >= 'a' && c <= 'f')
+        {
+            return c - 'a' + 10;
+        }
+        throw new IllegalArgumentException();
+    }
+
+    private char toHex(int nybble)
+    {
+        if (nybble < 0 || nybble > 15)
+        {
+            throw new IllegalArgumentException();
+        }
+        return "0123456789ABCDEF".toLowerCase().charAt(nybble);
+    }
+
     public boolean isValidAscii(char c)
     {
         if (c > 127)
@@ -90,44 +145,41 @@ public class AppTest
         return true;
     }
 
-//    public String hexToAscii(String hex, boolean filterAscii)
-//    {
-//        StringBuilder output = new StringBuilder();
-//        for (int i = 0; i < hex.length(); i += 2)
-//        {
-//            String str = hex.substring(i, i + 2);
-//            char c = (char) Integer.parseInt(str, 16);
-//            if (filterAscii)
-//            {
-//                if (isValidAscii(c))
-//                {
-//                    output.append(c);
-//                }
-//                else
-//                {
-//                    output.append(".");
-//                }
-//            }
-//            else
-//            {
-//                output.append(c);
-//            }
-//        }
-//        return output.toString();
-//    }
+    public String filterAscii(String string)
+    {
+        StringBuilder output = new StringBuilder();
+        for (int i = 0; i < string.length(); i++)
+        {
+
+            char c = string.charAt(i);
+
+            if (isValidAscii(c))
+            {
+                output.append(c);
+            }
+            else
+            {
+                output.append("_");
+            }
+
+        }
+        return output.toString();
+    }
 
     public String hexToAscii(String hex)
     {
         try
         {
             byte[] decodeHex = Hex.decodeHex(hex.toCharArray());
-            String string = new String(decodeHex);
-            return string;
+            String string = new String(decodeHex, UTF8);
+            return filterAscii(string);
         }
         catch (Exception e)
         {
+            //System.out.println("Error, returning : ");
+            //e.printStackTrace();
         }
-        return null;
+        return "_";
     }
 
     /**
@@ -141,7 +193,7 @@ public class AppTest
 
         String c1 = "3b101c091d53320c000910";
         String c2 = "071d154502010a04000419";
-        String xor = xor(c1, c2);
+        String xor = xorHex(c1, c2);
 
         assertEquals("746865", cribHex);
         assertEquals("3c0d094c1f523808000d09", xor);
@@ -176,42 +228,72 @@ public class AppTest
     @Test
     public void cipher1()
     {
-        String xor = xor(targetCipher, cipherTexts[0]);
-        System.out.println("Xor: " + xor);
-        System.out.println("Xor Divisible by 2: " + ((xor.length() % 2) == 0));
-        System.out.println("Xor Ascii: " + hexToAscii(xor));
-        String spaceHex = toHex(" ");
-        System.out.println("Space Hex: " + spaceHex);
+//        String xor = xor(targetCipher, cipherTexts[0]);
+//        System.out.println("Xor: " + xor);
+//        System.out.println("Xor Divisible by 2: " + ((xor.length() % 2) == 0));
+//        System.out.println("Xor Ascii: " + hexToAscii(xor));
+//        String spaceHex = toHex(" ");
+//        System.out.println("Space Hex: " + spaceHex);
 
-        String cribHex = toHex(" ace ");
+        String cribHex = toHex("the");
 
-        for (String cipher : cipherTexts)
+        String[] cribHexArray =
         {
-            xor = xor(targetCipher, cipher);
-            xorLine(xor, cribHex);
+            toHex("the "),
+            toHex("we can"),
+            toHex(" the "),
+            toHex(" and "),
+            toHex("and"),
+            toHex(" "),
+            toHex(" message in"),
+            toHex(" about"),
+            toHex("text produ"),
+            toHex("d probably"),
+            toHex("want to bud"),
+            //toHex("t"),
+        };
+
+        String xorString = targetCipher;
+        for (int i = 0; i < cipherTexts.length; i++)
+        {
+            xorString = xorHex(cipherTexts[i], targetCipher);
+            //System.out.println(xorString);
+            //System.out.println(hexToAscii(xorString));
+            //System.out.println("");
+            for (String string : cribHexArray)
+            {
+                System.out.println("Doing Crib: " + hexToAscii(string));
+                xorLine(xorString, string);
+                System.out.println("");
+                System.out.println("");
+            }
             System.out.println("");
         }
 
-
-
-        assertEquals("Hel", hexToAscii(xor));
-        assertEquals("3c0d094c1f523808000d09", xor);
+//                assertEquals("Hel", hexToAscii(xorString));
+//                assertEquals("3c0d094c1f523808000d09", xorString);
+//        String xor = xorHex(cipherTexts[0], targetCipher);
+//        //assertEquals(83, xor.length());
+//        System.out.println(xor);
+//        System.out.println(hexToAscii(xor));
+//        xor = xorHex(xor, cribHex);
+//        System.out.println(xor);
+//        System.out.println(hexToAscii(xor));
     }
 
-    protected String xorLine(String xor, String crib)
+    protected void xorLine(String xor, String crib)
     {
-        String line = "";
-        for (int i = 0; i < xor.length(); i = i + 2)
+
+        for (int i = 0; i < xor.length(); i++)
         {
-            String substring = xor.substring(i, i + 2);
+            String substring = xor.substring(i);
             // System.out.println("Substring: " + substring + " : " + i);
-            String xor2 = xor(substring, crib);
+            String xor2 = xorHex(substring, crib);
             //System.out.println("Xor2 Hex: " + xor2);
             String hexToAscii = hexToAscii(xor2);
-            System.out.print(hexToAscii);
+            String format = String.format("i:(%d) %s",i, hexToAscii);
+            System.out.println(format);
             //System.out.println("===========================");
-            line += hexToAscii;
         }
-        return line;
     }
 }
