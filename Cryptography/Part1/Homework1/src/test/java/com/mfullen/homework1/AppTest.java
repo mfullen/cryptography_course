@@ -2,15 +2,15 @@ package com.mfullen.homework1;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.apache.commons.codec.binary.Hex;
-import static org.junit.Assert.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -190,6 +190,7 @@ public class AppTest
         {
             //System.out.println("Error, returning : ");
             //e.printStackTrace();
+            int x = 0;
         }
         return INVALID_CHAR;
     }
@@ -210,13 +211,13 @@ public class AppTest
         assertEquals("746865", cribHex);
         assertEquals("3c0d094c1f523808000d09", xor);
 
-        String xor1 = xor("3c0d09", cribHex);
+        String xor1 = xorHex(xor, cribHex);
         assertEquals("48656c", xor1);
         assertEquals("Hel", hexToAscii(xor1));
 
 
         assertEquals("48656c6c6f", toHex("Hello"));
-        String xor2 = xor("3c0d094c1f", toHex("Hello"));
+        String xor2 = xorHex("3c0d094c1f", toHex("Hello"));
         assertEquals("the p", hexToAscii(xor2));
 //        {
 //            String xor3 = xor("c0d094c1f5", toHex("Hello"));
@@ -235,6 +236,86 @@ public class AppTest
             assertEquals("Hello World", hexToAscii(xor3));
         }
 
+    }
+
+    @Test
+    public void testHelperMethods2()
+    {
+        final String crib = "the";
+        String cribHex = toHex(crib);
+
+        String c1 = "3b101c091d53320c000910";
+        String c2 = "071d154502010a04000419";
+        String key = toHex("supersecret");
+        assertEquals("7375706572736563726574", key);
+        String c3 = xorHex(toHex("the mike"), key);
+        System.out.println("C3:" + c3);
+        String xor = xorHex(c1, c2);
+
+        assertEquals("746865", cribHex);
+        assertEquals("3c0d094c1f523808000d09", xor);
+
+        String xor1 = xorHex(xor, cribHex);
+        assertEquals("48656c", xor1);
+        assertEquals("Hel", hexToAscii(xor1));
+
+        String[] cribHexArray =
+        {
+            toHex("the"),
+            toHex("Hel"),
+            toHex("the "),
+            toHex("Hell"),
+            toHex("Hello"),
+            toHex("Hello "),
+            toHex("the p"),
+            toHex("the pr"),
+            toHex("ya"),
+            toHex(" "),
+            toHex("gram"),
+            toHex("pro"),
+            toHex("o W"),
+            toHex("the program"),
+            toHex("Hello World"),
+            toHex("mike"),
+        };
+        Map<String, List<String>> map = new HashMap<String, List<String>>();
+
+        System.out.println("Cipher Xor: " + xor);
+        for (String cribString : cribHexArray)
+        {
+            String ascCrib = hexToAscii(cribString);
+
+            for (int j = 0; j < xor.length(); j++)
+            {
+                String substring = xor.substring(j);
+
+                String xor2 = xorHex(substring, cribString);
+
+                if (!map.containsKey(ascCrib))
+                {
+                    map.put(ascCrib, new ArrayList<String>());
+                }
+                String hexToAscii = hexToAscii(xor2);
+                String format = String.format("j:(%d) %s", j, hexToAscii);
+
+                if (!hexToAscii.contains(INVALID_CHAR))
+                {
+                    List<String> get = map.get(ascCrib);
+                    get.add(hexToAscii);
+                }
+
+            }
+
+            //System.out.println("");
+            //System.out.println("");
+        }
+
+        for (Map.Entry<String, List<String>> entry : map.entrySet())
+        {
+            String format = String.format("%s:\t %s", entry.getKey(), entry.getValue());
+            System.out.print(format);
+            System.out.println();
+        }
     }
 
     @Test
@@ -262,7 +343,7 @@ public class AppTest
             toHex("o"),
         };
 
-        Map<Integer, List<String>> map = new HashMap<Integer, List<String>>();
+        Map<String, List<String>> map = new HashMap<String, List<String>>();
         String xorString = targetCipher;
         for (int i = 0; i < cipherTexts.length; i++)
         {
@@ -270,6 +351,7 @@ public class AppTest
 
             for (String cribString : cribHexArray)
             {
+                String ascCrib = hexToAscii(cribString);
                 //System.out.println("Doing Crib: " + hexToAscii(cribString));
                 for (int j = 0; j < xorString.length(); j++)
                 {
@@ -277,16 +359,16 @@ public class AppTest
                     // System.out.println("Substring: " + substring + " : " + i);
                     String xor2 = xorHex(substring, cribString);
 
-                    if (!map.containsKey(j))
+                    if (!map.containsKey(ascCrib))
                     {
-                        map.put(j, new ArrayList<String>());
+                        map.put(ascCrib, new ArrayList<String>());
                     }
                     String hexToAscii = hexToAscii(xor2);
                     String format = String.format("j:(%d) %s", j, hexToAscii);
                     //System.out.println(format);
                     if (!hexToAscii.contains(INVALID_CHAR))
                     {
-                        List<String> get = map.get(j);
+                        List<String> get = map.get(ascCrib);
                         get.add(hexToAscii);
                     }
 
@@ -298,27 +380,354 @@ public class AppTest
         }
 
 
-        for (Map.Entry<Integer, List<String>> entry : map.entrySet())
+        for (Map.Entry<String, List<String>> entry : map.entrySet())
         {
-            String format = String.format("%d: \t %s", entry.getKey(), entry.getValue());
+            String format = String.format("%s: \t %s", entry.getKey(), entry.getValue());
             System.out.print(format);
             System.out.println();
         }
     }
 
-    protected void xorLine(String xor, String crib)
+    @Test
+    public void cipher2()
     {
-
-        for (int i = 0; i < xor.length(); i++)
+        String[] cribHexArray =
         {
-            String substring = xor.substring(i);
-            // System.out.println("Substring: " + substring + " : " + i);
-            String xor2 = xorHex(substring, crib);
-            //System.out.println("Xor2 Hex: " + xor2);
-            String hexToAscii = hexToAscii(xor2);
-            String format = String.format("i:(%d) %s", i, hexToAscii);
-            System.out.println(format);
-            //System.out.println("===========================");
+            toHex("the "),
+            toHex("we can "),
+            toHex("the sec"),
+            toHex("Ever us"),
+            toHex(" the "),
+            toHex(" and "),
+            toHex("and"),
+            toHex(" "),
+            toHex("ssage"),
+            toHex("sage in"),
+            toHex(" about"),
+            toHex("toma"),
+            toHex("the nup"),
+            toHex("text produ"),
+            toHex("d probably"),
+            toHex("e"),
+            toHex("t"),
+            toHex("a"),
+            toHex("o"),
+        };
+
+        Map<String, List<String>> map = new HashMap<String, List<String>>();
+        String xorString = targetCipher;
+        for (int i = 0; i < cipherTexts.length; i++)
+        {
+            xorString = xorHex(cipherTexts[i], xorString);
+
+            for (String cribString : cribHexArray)
+            {
+                //System.out.println("Doing Crib: " + hexToAscii(cribString));
+                int length = xorString.length();
+
+                String ascCrib = hexToAscii(cribString);
+                for (int j = 0; j < xorString.length(); j += cribString.length())
+                {
+                    String substring = xorString.substring(j);
+                    // System.out.println("Substring: " + substring + " : " + i);
+                    String xor2 = xorHex(substring, cribString);
+
+                    if (!map.containsKey(ascCrib))
+                    {
+                        map.put(ascCrib, new ArrayList<String>());
+                    }
+                    String hexToAscii = hexToAscii(xor2);
+                    String format = String.format("j:(%d) %s", j, hexToAscii);
+                    //System.out.println(format);
+                    if (!hexToAscii.contains(INVALID_CHAR))
+                    {
+                        List<String> get = map.get(ascCrib);
+                        get.add(hexToAscii);
+                    }
+
+                }
+                //System.out.println("");
+                //System.out.println("");
+            }
+            System.out.println("");
         }
+
+
+        for (Map.Entry<String, List<String>> entry : map.entrySet())
+        {
+            String format = String.format("%s: \t %s", entry.getKey(), entry.getValue());
+            System.out.print(format);
+            System.out.println();
+            System.out.println();
+        }
+    }
+
+    @Test
+    public void cipher3()
+    {
+        String[] cText = new String[cipherTexts.length + 1];
+        System.arraycopy(cipherTexts, 0, cText, 0, cipherTexts.length);
+        cText[cipherTexts.length] = targetCipher;
+
+        String[][] xorMatrix = new String[cText.length][cText.length];
+        //Get Matrix of All Cipher Texts xored with one another
+        for (int i = 0; i < cText.length; i++)
+        {
+            for (int j = 0; j < cText.length; j++)
+            {
+                if (i != j)
+                {
+                    xorMatrix[i][j] = xorHex(cText[i], cText[j]);
+                }
+            }
+        }
+
+        String[] cribHexArray =
+        {
+            toHex("the"),
+            toHex("the "),
+            toHex(" the "),
+            toHex("The "),
+            toHex("priv"),
+            toHex("The nic"),
+            toHex("We can "),
+            toHex("we can "),
+            toHex("euler"),
+            toHex("Ful"),
+            toHex("here"),
+            toHex("don"),
+            toHex("e"),
+            toHex("t"),
+            toHex("at"),
+            toHex(" "),
+            toHex("Who"),
+            toHex("What"),
+            toHex("Where"),
+            toHex("When"),
+            toHex("Why"),
+            toHex("How"),
+            toHex("You"),
+            toHex("you")
+        };
+        for (String cribHex : cribHexArray)
+        {
+            System.out.print("CribHex: " + hexToAscii(cribHex));
+            System.out.println();
+            for (String[] strings : xorMatrix)
+            {
+                for (String string : strings)
+                {
+                    if (string != null)
+                    {
+                        String xorHex = xorHex(string, cribHex);
+                        System.out.print(hexToAscii(xorHex));
+                    }
+                }
+                System.out.println();
+            }
+            System.out.println();
+        }
+
+    }
+
+    @Test
+    public void exampleCipher()
+    {
+        String[] cText =
+        {
+            "3b101c091d53320c000910",
+            "071d154502010a04000419"
+        };
+
+        String[][] xorMatrix = new String[cText.length][cText.length];
+        //Get Matrix of All Cipher Texts xored with one another
+        for (int i = 0; i < cText.length; i++)
+        {
+            for (int j = 0; j < cText.length; j++)
+            {
+                if (i != j)
+                {
+                    xorMatrix[i][j] = xorHex(cText[i], cText[j]);
+                }
+            }
+        }
+
+
+        String[] cribHexArray =
+        {
+            toHex("the"),
+            toHex("the "),
+            toHex("tel"),
+            toHex("ya"),
+            toHex("the         "),
+            toHex("Hello"),
+            toHex("Hello "),
+            toHex(" W"),
+            toHex("orld"),
+            toHex("the pro"),
+        };
+        for (String cribHex : cribHexArray)
+        {
+            System.out.print("CribHex: " + hexToAscii(cribHex));
+            System.out.println();
+            for (String[] strings : xorMatrix)
+            {
+                for (String string : strings)
+                {
+                    if (string != null)
+                    {
+                        for (int j = 0; j < string.length(); j++)
+                        {
+                            String substring = string.substring(j);
+                            // System.out.println("Substring: " + substring + " : " + i);
+
+                            //String xorHex = xorHex(string, cribHex);
+                            String xorHex = xorHex(substring, cribHex);
+                            String hexToAscii = hexToAscii(xorHex);
+
+                            if (!hexToAscii.contains("."))
+                            {
+                                System.out.print(hexToAscii + "|");
+                            }
+
+                        }
+                    }
+
+                }
+                System.out.println();
+            }
+            System.out.println();
+        }
+
+    }
+
+    @Test
+    public void exampleCipher2() throws DecoderException
+    {
+        String[] cText =
+        {
+            "3b101c091d53320c000910",
+            "071d154502010a04000419"
+        };
+
+        byte[][] xorMatrix = new byte[cText.length][cText[0].getBytes().length];
+        //Get Matrix of All Cipher Texts xored with one another
+        for (int i = 0; i < cText.length; i++)
+        {
+            try
+            {
+                xorMatrix[i] = Hex.decodeHex(cText[i].toCharArray());
+            }
+            catch (DecoderException ex)
+            {
+                Logger.getLogger(AppTest.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        for (int i = 0; i < xorMatrix.length; i++)
+        {
+//            try
+//            {
+            byte[] col = xorMatrix[i];
+            System.out.print("[");
+            for (byte b : col)
+            {
+                System.out.print(b + " ");
+            }
+            System.out.print("]");
+            System.out.print("\t");
+            String text = new String(col);
+            System.out.print("\t");
+            System.out.print(text);
+            System.out.println();
+            //System.out.println();
+//
+//                System.out.print("\t");
+//                text = new String(Hex.decodeHex(text.toCharArray()));
+//                System.out.print("\t");
+//                System.out.print(text);
+//                System.out.println();
+//            }
+//            catch (DecoderException ex)
+//            {
+//                Logger.getLogger(AppTest.class.getName()).log(Level.SEVERE, null, ex);
+//            }
+        }
+
+
+        byte[] xor = xorBytes(xorMatrix[0], xorMatrix[1]);
+
+
+        System.out.println("===================================================================================");
+        System.out.print("[");
+        for (byte b : xor)
+        {
+            System.out.print(b + " ");
+        }
+        System.out.print("]");
+        System.out.print("\t");
+        String text = new String(xor);
+        System.out.print("\t");
+        System.out.print("|" + text + "|");
+        System.out.println();
+
+        byte[] bite = xorBytes(xorMatrix[0], toHex(" ").getBytes());
+        System.out.print("]");
+        System.out.print("\t");
+        text = new String(bite);
+        System.out.print("\t");
+        System.out.print("|" + text + "|");
+        System.out.println();
+
+//        System.out.println();
+//        System.out.println("===================================");
+//        byte[] xorBytes = xorBytes(xor, " ".getBytes());
+//        text = new String(xorBytes);
+//        System.out.print("\t");
+//        System.out.print("|" + text + "|");
+//        System.out.println();
+//
+//
+//        System.out.println();
+//        System.out.println("===================================");
+//        xorBytes = xorBytes(xor, toHex(text).getBytes());
+//        text = new String(xorBytes);
+//        System.out.print("\t");
+//        System.out.print("|" + text + "|");
+//        System.out.println();
+
+
+
+    }
+
+    @Test
+    public void homeworkQuestion7() throws DecoderException
+    {
+        String hexEncrypt = "6c73d5240a948c86981bc294814d";
+        String message = "attack at dawn";
+        String key = xorHex(toHex(message), hexEncrypt);
+        assertEquals("0d07a14569fface7ec3ba6f5f623", key);
+        assertEquals(message, hexToAscii(xorHex(key, hexEncrypt)));
+
+        String message2 = "attack at dusk";
+
+        String hexEncrypt2 = xorHex(toHex(message2), key);
+        System.out.println(hexEncrypt2);
+        assertEquals("6c73d5240a948c86981bc2808548", hexEncrypt2);
+        assertNotEquals(hexEncrypt, hexEncrypt2);
+
+    }
+
+    public byte[] xorBytes(byte[] b1, byte[] b2)
+    {
+        int length = b1.length > b2.length ? b2.length : b1.length;
+        byte[] xor = new byte[length];
+
+        for (int i = 0; i < length; i++)
+        {
+            xor[i] = (byte) (b1[i] ^ b2[i]);
+        }
+
+        return xor;
     }
 }
