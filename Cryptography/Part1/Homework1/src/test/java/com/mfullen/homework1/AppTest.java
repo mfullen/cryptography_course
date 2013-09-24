@@ -6,6 +6,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.codec.binary.Hex;
 import static org.junit.Assert.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -15,6 +20,7 @@ import org.junit.Test;
  */
 public class AppTest
 {
+    public static final String INVALID_CHAR = ".";
     private String[] cipherTexts;
     private String targetCipher;
     private static final String UTF8 = "UTF-8";
@@ -133,7 +139,7 @@ public class AppTest
 
     public boolean isValidAscii(char c)
     {
-        if (c > 127)
+        if (c > 122)
         {
             return false;
         }
@@ -141,6 +147,12 @@ public class AppTest
         {
             return false;
         }
+
+        if (c > 32 && c < 48)
+        {
+            return false;
+        }
+
 
         return true;
     }
@@ -159,7 +171,7 @@ public class AppTest
             }
             else
             {
-                output.append("_");
+                output.append(INVALID_CHAR);
             }
 
         }
@@ -179,7 +191,7 @@ public class AppTest
             //System.out.println("Error, returning : ");
             //e.printStackTrace();
         }
-        return "_";
+        return INVALID_CHAR;
     }
 
     /**
@@ -228,57 +240,70 @@ public class AppTest
     @Test
     public void cipher1()
     {
-//        String xor = xor(targetCipher, cipherTexts[0]);
-//        System.out.println("Xor: " + xor);
-//        System.out.println("Xor Divisible by 2: " + ((xor.length() % 2) == 0));
-//        System.out.println("Xor Ascii: " + hexToAscii(xor));
-//        String spaceHex = toHex(" ");
-//        System.out.println("Space Hex: " + spaceHex);
-
-        String cribHex = toHex("the");
-
         String[] cribHexArray =
         {
             toHex("the "),
-            toHex("we can"),
+            toHex("we can "),
+            toHex("the second"),
+            toHex("Ever us"),
             toHex(" the "),
             toHex(" and "),
             toHex("and"),
             toHex(" "),
-            toHex(" message in"),
+            toHex("ssage"),
             toHex(" about"),
+            toHex("toma"),
+            toHex("the nup"),
             toHex("text produ"),
             toHex("d probably"),
-            toHex("want to bud"),
-            //toHex("t"),
+            toHex("e"),
+            toHex("t"),
+            toHex("a"),
+            toHex("o"),
         };
 
+        Map<Integer, List<String>> map = new HashMap<Integer, List<String>>();
         String xorString = targetCipher;
         for (int i = 0; i < cipherTexts.length; i++)
         {
-            xorString = xorHex(cipherTexts[i], targetCipher);
-            //System.out.println(xorString);
-            //System.out.println(hexToAscii(xorString));
-            //System.out.println("");
-            for (String string : cribHexArray)
+            xorString = xorHex(cipherTexts[i], xorString);
+
+            for (String cribString : cribHexArray)
             {
-                System.out.println("Doing Crib: " + hexToAscii(string));
-                xorLine(xorString, string);
-                System.out.println("");
-                System.out.println("");
+                //System.out.println("Doing Crib: " + hexToAscii(cribString));
+                for (int j = 0; j < xorString.length(); j++)
+                {
+                    String substring = xorString.substring(j);
+                    // System.out.println("Substring: " + substring + " : " + i);
+                    String xor2 = xorHex(substring, cribString);
+
+                    if (!map.containsKey(j))
+                    {
+                        map.put(j, new ArrayList<String>());
+                    }
+                    String hexToAscii = hexToAscii(xor2);
+                    String format = String.format("j:(%d) %s", j, hexToAscii);
+                    //System.out.println(format);
+                    if (!hexToAscii.contains(INVALID_CHAR))
+                    {
+                        List<String> get = map.get(j);
+                        get.add(hexToAscii);
+                    }
+
+                }
+                //System.out.println("");
+                //System.out.println("");
             }
             System.out.println("");
         }
 
-//                assertEquals("Hel", hexToAscii(xorString));
-//                assertEquals("3c0d094c1f523808000d09", xorString);
-//        String xor = xorHex(cipherTexts[0], targetCipher);
-//        //assertEquals(83, xor.length());
-//        System.out.println(xor);
-//        System.out.println(hexToAscii(xor));
-//        xor = xorHex(xor, cribHex);
-//        System.out.println(xor);
-//        System.out.println(hexToAscii(xor));
+
+        for (Map.Entry<Integer, List<String>> entry : map.entrySet())
+        {
+            String format = String.format("%d: \t %s", entry.getKey(), entry.getValue());
+            System.out.print(format);
+            System.out.println();
+        }
     }
 
     protected void xorLine(String xor, String crib)
@@ -291,7 +316,7 @@ public class AppTest
             String xor2 = xorHex(substring, crib);
             //System.out.println("Xor2 Hex: " + xor2);
             String hexToAscii = hexToAscii(xor2);
-            String format = String.format("i:(%d) %s",i, hexToAscii);
+            String format = String.format("i:(%d) %s", i, hexToAscii);
             System.out.println(format);
             //System.out.println("===========================");
         }
