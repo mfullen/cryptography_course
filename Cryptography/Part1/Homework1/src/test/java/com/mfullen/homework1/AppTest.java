@@ -701,6 +701,18 @@ public class AppTest
     }
 
     @Test
+    public void homeworkQuestion5()
+    {
+        byte message = 127;
+        byte key = 10 % 256;
+
+        byte encrypt = (byte) (message + key);
+        byte decrypt = (byte) (encrypt - key);
+        assertEquals(message, decrypt);
+        //message and key size are equal because of being bytes
+    }
+
+    @Test
     public void homeworkQuestion7() throws DecoderException
     {
         String hexEncrypt = "6c73d5240a948c86981bc294814d";
@@ -714,6 +726,24 @@ public class AppTest
         String hexEncrypt2 = xorHex(toHex(message2), key);
         System.out.println(hexEncrypt2);
         assertEquals("6c73d5240a948c86981bc2808548", hexEncrypt2);
+        assertNotEquals(hexEncrypt, hexEncrypt2);
+
+    }
+    @Test
+    public void homeworkQuestion7_attempt2() throws DecoderException
+    {
+        String hexEncrypt = "09e1c5f70a65ac519458e7e53f36";
+        String message = "attack at dawn";
+        String key = xorHex(toHex(message), hexEncrypt);
+        System.out.println(key);
+        assertEquals("6895b196690e8c30e07883844858", key);
+        assertEquals(message, hexToAscii(xorHex(key, hexEncrypt)));
+
+        String message2 = "attack at dusk";
+
+        String hexEncrypt2 = xorHex(toHex(message2), key);
+        System.out.println(hexEncrypt2);
+        assertEquals("09e1c5f70a65ac519458e7f13b33", hexEncrypt2);
         assertNotEquals(hexEncrypt, hexEncrypt2);
 
     }
