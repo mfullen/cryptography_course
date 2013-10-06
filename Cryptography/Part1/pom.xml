@@ -13,5 +13,6 @@
   <name>Part1</name>
   <modules>
     <module>Homework1</module>
+    <module>Homework2</module>
   </modules>
 </project>

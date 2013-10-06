@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -184,7 +185,8 @@ public class AppTest
         {
             byte[] decodeHex = Hex.decodeHex(hex.toCharArray());
             String string = new String(decodeHex, UTF8);
-            return filterAscii(string);
+            return string;
+            //return filterAscii(string);
         }
         catch (Exception e)
         {
@@ -193,6 +195,28 @@ public class AppTest
             int x = 0;
         }
         return INVALID_CHAR;
+    }
+
+    public String hexStringXor(String a, String b)
+    {
+        String result = "";
+
+        int length = Math.min(a.length(), b.length());
+
+        for (int i = 0; i < length; i = i + 2)
+        {
+            String aHex = a.substring(i, i + 1);
+            String bHex = b.substring(i, i + 1);
+            BigInteger aInt = new BigInteger(aHex, 16);
+            BigInteger bInt = new BigInteger(bHex, 16);
+            //int aInt = Integer.parseInt(aHex, 16);
+            //int bInt = Integer.parseInt(bHex, 16);
+            int xor = aInt.intValue() ^ bInt.intValue();
+            //result += Integer.toHexString(xor);
+            result += (char) xor;
+        }
+
+        return result;
     }
 
     /**
@@ -531,6 +555,26 @@ public class AppTest
     }
 
     @Test
+    public void cipher4() throws UnsupportedEncodingException
+    {
+        //once we figure out one of the messages by crib-dragging, we can derive the key
+        final String message0text = "We can factor the number 15 with quantum computers. We can also factor the number 15 with";
+        //the key is the ciphertext of the message found (in this case message 0) XOR message0text
+        String key = xorHex(cipherTexts[0], toHex(message0text));
+
+        //now that we have the key for one message, we can also view all of the other messages
+        for (String cipher : cipherTexts)
+        {
+            String mine = xorHex(key, cipher);
+            System.out.println(hexToAscii(mine));
+        }
+
+        //use the key on the targeted cipher text
+        String targetPlainText = xorHex(key, this.targetCipher);
+        assertEquals("The secret message is: When using a stream cipher, never use the key more than once", hexToAscii(targetPlainText));
+    }
+
+    @Test
     public void exampleCipher()
     {
         String[] cText =
@@ -729,6 +773,7 @@ public class AppTest
         assertNotEquals(hexEncrypt, hexEncrypt2);
 
     }
+
     @Test
     public void homeworkQuestion7_attempt2() throws DecoderException
     {
