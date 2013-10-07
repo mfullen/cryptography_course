@@ -14,5 +14,6 @@
   <modules>
     <module>Homework1</module>
     <module>Homework2</module>
+    <module>HwCommon</module>
   </modules>
 </project>

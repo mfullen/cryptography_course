@@ -27,16 +27,16 @@
             <artifactId>commons-codec</artifactId>
             <version>1.8</version>
         </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk16</artifactId>
-            <version>1.46</version>
-            <type>pom.sig</type>
-        </dependency>
+
         <dependency>
             <groupId>org.apache.directory.studio</groupId>
             <artifactId>org.bouncycastle.bcprov.jdk15</artifactId>
             <version>140</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>HwCommon</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>
